@@ -49,7 +49,8 @@ module EmsRefresh::SaveInventoryInfra
       $log.debug "#{log_header} hashes:\n#{YAML.dump(hashes)}"
     end
 
-    child_keys = [:storages, :clusters, :hosts, :vms, :folders, :resource_pools, :customization_specs]
+    child_keys = [:storages, :clusters, :hosts, :vms, :folders, :resource_pools, :customization_specs,
+                  :orchestration_stacks]
 
     # Save and link other subsections
     save_child_inventory(ems, hashes, child_keys, target)
@@ -297,5 +298,34 @@ module EmsRefresh::SaveInventoryInfra
   def save_storage_files_inventory(storage, hashes)
     deletes = storage.storage_files(true).dup
     save_inventory_multi(:storage_files, storage, hashes, deletes, :name)
+  end
+
+  def save_orchestration_stacks_inventory(ems, hashes, target = nil)
+    target = ems if target.nil?
+
+    ems.orchestration_stacks(true)
+    deletes = if (target == ems)
+                ems.orchestration_stacks.dup
+              else
+                []
+              end
+
+    _stacks = save_inventory_multi(:orchestration_stacks,
+                                   ems,
+                                   hashes,
+                                   deletes,
+                                   :ems_ref,
+                                   [:parameters])
+    store_ids_for_new_records(ems.orchestration_stacks, hashes, :ems_ref)
+  end
+
+  def save_parameters_inventory(orchestration_stack, hashes)
+    deletes = orchestration_stack.parameters(true).dup
+
+    save_inventory_multi(:parameters,
+                         orchestration_stack,
+                         hashes,
+                         deletes,
+                         :ems_ref)
   end
 end
