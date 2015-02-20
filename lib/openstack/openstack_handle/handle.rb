@@ -22,7 +22,8 @@ module OpenstackHandle
       "Storage"       => :swift,
       "Metering"      => :ceilometer,
       "Baremetal"     => :baremetal,
-      "Orchestration" => :orchestration
+      "Orchestration" => :orchestration,
+      "Planning"      => :planning
     }
 
     def self.raw_connect_try_ssl(username, password, address, port, service = "Compute", opts = nil)
@@ -54,7 +55,13 @@ module OpenstackHandle
       # throw an error trying to build an connection error message.
       opts[:openstack_service_type] = ["object-store"] if service == "Storage"
 
-      Fog.const_get(service).new(opts)
+      if service == "Planning"
+        # Special behaviour for Planning service Tuskar, since it is OpenStack specific service, there is no
+        # Fog::Planning module, only Fog::OpenStack::Planning
+        Fog::Openstack.const_get(service).new(opts)
+      else
+        Fog.const_get(service).new(opts)
+      end
     rescue Fog::Errors::NotFound => err
       raise MiqException::ServiceNotAvailable if err.message.include?("Could not find service")
       raise
@@ -136,6 +143,18 @@ module OpenstackHandle
 
     def orchestration_service_name
       service_name("Orchestration")
+    end
+
+    def planning_service(tenant_name = nil)
+      connect(:service => "Planning", :tenant_name => tenant_name)
+    end
+
+    def detect_planning_service(tenant_name = nil)
+      detect_service("Planning", tenant_name)
+    end
+
+    def planning_service_name
+      service_name("Planning")
     end
 
     def compute_service(tenant_name = nil)
