@@ -70,14 +70,14 @@ module ApplicationHelper
     if options[:feature]
       auth = options[:any] ? User.current_user.role_allows_any?(:identifiers => [options[:feature]]) :
                              User.current_user.role_allows?(:identifier => options[:feature])
-      $log.debug("Role Authorization #{auth ? "successful" : "failed"} for: userid [#{session[:userid]}], role id [#{role_id}], feature identifier [#{options[:feature]}]")
+      $log.info("Role Authorization #{auth ? "successful" : "failed"} for: userid [#{session[:userid]}], role id [#{role_id}], feature identifier [#{options[:feature]}]")
     elsif options[:main_tab_id] # FIXME: used only in tab definition
       tab = Menu::Manager.tab_features_by_id(options[:main_tab_id])
       auth = User.current_user.role_allows_any?(:identifiers => tab)
-      $log.debug("Role Authorization #{auth ? "successful" : "failed"} for: userid [#{session[:userid]}], role id [#{role_id}], main tab [#{options[:main_tab]}]")
+      $log.info("Role Authorization #{auth ? "successful" : "failed"} for: userid [#{session[:userid]}], role id [#{role_id}], main tab [#{options[:main_tab]}]")
     else
       auth = false
-      $log.debug("Role Authorization #{auth ? "successful" : "failed"} for: userid [#{session[:userid]}], role id [#{role_id}], no main tab or feature passed to role_allows")
+      $log.info("Role Authorization #{auth ? "successful" : "failed"} for: userid [#{session[:userid]}], role id [#{role_id}], no main tab or feature passed to role_allows")
     end
     auth
   end
@@ -682,33 +682,34 @@ module ApplicationHelper
 
   # Determine if a button should be hidden
   def build_toolbar_hide_button(id)
+    $log.info("RWSU id #{id} #{@record}")
     return true if id == "blank_button" # Always hide the blank button placeholder
 
     # hide timelines button for Amazon provider and instances
     # TODO: extend .is_available? support via refactoring task to cover this scenario
     return true if ['ems_cloud_timeline', 'instance_timeline'].include?(id) && (@record.kind_of?(EmsAmazon) || @record.kind_of?(VmAmazon))
-
+    $log.info("RWSU1")
     # hide edit button for MiqRequest instances of type ServiceReconfigureRequest/ServiceTemplateProvisionRequest
     # TODO: extend .is_available? support via refactoring task to cover this scenario
     return true if id == 'miq_request_edit' &&
                    %w(ServiceReconfigureRequest ServiceTemplateProvisionRequest).include?(@miq_request.try(:type))
-
+    $log.info("RWSU2")
     # only hide gtl button if they are not in @temp
     return @temp[:gtl_buttons].include?(id) ? false : true if @temp &&
                                                 @temp[:gtl_buttons] && ["view_grid","view_tile","view_list"].include?(id)
-
+    $log.info("RWSU3")
     #don't hide view buttons in toolbar
     return false if %( view_grid view_tile view_list refresh_log fetch_log common_drift
       download_text download_csv download_pdf download_view vm_download_pdf
       tree_large tree_small).include?(id) && !%w(miq_policy_rsop ops).include?(@layout)
-
+    $log.info("RWSU4")
     # dont hide back to summary button button when not in explorer
     return false if id == "show_summary" && !@explorer
-
+    $log.info("RWSU5")
     #need to hide add buttons when on sub-list view screen of a CI.
     return true if (id.ends_with?("_new") || id.ends_with?("_discover")) &&
                             @lastaction == "show" && @display != "main"
-
+    $log.info("RWSU6")
     if id == "summary_reload"                             # Show reload button if
       return @explorer &&                                 # we are in explorer and
              ((@record &&                                 #    1) we are on a record and
@@ -717,7 +718,7 @@ module ApplicationHelper
               @lastaction == "show_list") ?               # or 2) selected node shows a list of records
         false : true
     end
-
+    $log.info("RWSU7")
     if id.starts_with?("history_")
       if x_tree_history[id.split("_").last.to_i] || id.ends_with?("_1")
         return false
@@ -725,71 +726,73 @@ module ApplicationHelper
         return true
       end
     end
-
+    $log.info("RWSU8")
     # user can see the buttons if they can get to Policy RSOP/Automate Simulate screen
     return false if ["miq_ae_tools"].include?(@layout)
-
+    $log.info("RWSU9")
     #hide this button when in custom buttons tree on ci node, this button is added in toolbar to show on Buttons folder node in CatalogItems tree
     return true if id == "ab_button_new" && x_active_tree == :ab_tree && x_node.split('_').length == 2 &&  x_node.split('_')[0] == "xx-ab"
-
+    $log.info("RWSU10")
     # Form buttons don't need RBAC check
     return false if ["button_add"].include?(id) && @edit && !@edit[:rec_id]
-
+    $log.info("RWSU11")
     # Form buttons don't need RBAC check
     return false if ["button_save","button_reset"].include?(id) && @edit && @edit[:rec_id]
-
+    $log.info("RWSU12")
     # Form buttons don't need RBAC check
     return false if ["button_cancel"].include?(id)
-
+    $log.info("RWSU13")
     #buttons on compare/drift screen are allowed if user has access to compare/drift
     return false if id.starts_with?("compare_") || id.starts_with?("drift_") || id.starts_with?("comparemode_") || id.starts_with?("driftmode_")
-
+    $log.info("RWSU14")
     # Allow custom buttons on CI show screen, user can see custom button if they can get to show screen
     return false if id.starts_with?("custom_")
-
+    $log.info("RWSU15")
     return false if id == "miq_request_reload" && # Show the request reload button
       (@lastaction == "show_list" || @showtype == "miq_provisions")
-
+    $log.info("RWSU16")
     if @layout == "miq_policy_rsop"
       return build_toolbar_hide_button_rsop(id)
     end
-
+    $log.info("RWSU17")
     if id.starts_with?("chargeback_")
       res = build_toolbar_hide_button_cb(id)
       return res
     end
-
+    $log.info("RWSU18")
     if @layout == "ops"
       res = build_toolbar_hide_button_ops(id)
       return res
     end
-
+    $log.info("RWSU19")
     if @layout == "pxe" || id.starts_with?("pxe_") || id.starts_with?("customization_template_")
       res = build_toolbar_hide_button_pxe(id)
       return res
     end
-
+    $log.info("RWSU20")
     if @layout == "report"
       res = build_toolbar_hide_button_report(id)
       return res
     end
-
+    $log.info("RWSU21")
     return false if role_allows(:feature=>"my_settings_time_profiles") && @layout == "configuration" &&
                       @tabform == "ui_4"
-
+    $log.info("RWSU22")
     return false if id.starts_with?("miq_capacity_") && @sb[:active_tab] == "report"
-
+    $log.info("RWSU23")
     #hide button if id is approve/deny and miq_request_approval feature is not allowed.
     return true if !role_allows(:feature=>"miq_request_approval") && ["miq_request_approve","miq_request_deny"].include?(id)
-
+    $log.info("RWSU24")
     # don't check for feature RBAC if id is miq_request_approve/deny
     if @layout != "miq_policy"
+      $log.info("RWSU25")
       return true if !role_allows(:feature=>id) && !["miq_request_approve","miq_request_deny"].include?(id) &&
           !id.starts_with?("dialog_") && !id.starts_with?("miq_task_")
     end
     # Check buttons with other restriction logic
     case id
     when "dialog_add_box", "dialog_add_element", "dialog_add_tab", "dialog_res_discard", "dialog_resource_remove"
+      $log.info("RWSU26")
       return true if !@edit
       return true if id == "dialog_res_discard" && @sb[:edit_typ] != "add"
       return true if id == "dialog_resource_remove" && (@sb[:edit_typ] == "add" || x_node == "root")
@@ -798,29 +801,37 @@ module ApplicationHelper
       return true if id == "dialog_add_box" && (nodes.length < 2 || nodes.length > 3)
       return true if id == "dialog_add_element" && (nodes.length < 3 || nodes.length > 4)
     when "dialog_copy", "dialog_delete", "dialog_edit", "dialog_new"
+      $log.info("RWSU27")
       return true if @edit && @edit[:current]
     when "miq_task_canceljob"
+      $log.info("RWSU28")
       return true if !["all_tasks", "all_ui_tasks"].include?(@layout)
     when "vm_console"
+      $log.info("RWSU29")
       return true if !@record.console_supported? ||
           (get_vmdb_config[:server][:remote_console_type] && get_vmdb_config[:server][:remote_console_type] != "MKS")
     when "vm_vnc_console"
+      $log.info("RWSU30")
       return true if !@record.console_supported? ||
           !get_vmdb_config[:server][:remote_console_type] ||
           (get_vmdb_config[:server][:remote_console_type] && get_vmdb_config[:server][:remote_console_type] != "VNC")
     when "vm_vmrc_console"
+      $log.info("RWSU31")
       return true if !@record.console_supported? ||
           !get_vmdb_config[:server][:remote_console_type] ||
           (get_vmdb_config[:server][:remote_console_type] && get_vmdb_config[:server][:remote_console_type] != "VMRC")
     # Check buttons behind SMIS setting
     when "ontap_storage_system_statistics", "ontap_logical_disk_statistics", "ontap_storage_volume_statistics",
         "ontap_file_share_statistics"
+        $log.info("RWSU32")
       return true unless get_vmdb_config[:product][:smis]
     when 'vm_publish'
+      $log.info("RWSU33")
       return true if @is_redhat
     end
-
+    $log.info("RWSU34")
     # Now check model/record specific rules
+    $log.info("RWSU get_record_cls(@record) #{get_record_cls(@record)}")
     case get_record_cls(@record)
     when "AssignedServerRole"
       case id

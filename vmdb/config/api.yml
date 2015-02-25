@@ -303,6 +303,9 @@
       - :name: delete
         :identifier: ems_infra_delete
         :disabled: true
+      - :name: scale
+        :identifier: ems_infra_scale
+        :disabled: true
     :resource_actions:
       :post:
       - :name: edit
