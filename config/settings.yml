@@ -985,7 +985,7 @@
   :memcache_server: 127.0.0.1:11211
   :memcache_server_opts: "-l 127.0.0.1 -I 1M"
   :show_login_info: true
-  :timeout: 3600
+  :timeout: 36000
 :smartproxy_deploy:
   :queue_timeout: 30.minutes
 :smtp:

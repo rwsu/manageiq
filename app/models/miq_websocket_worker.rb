@@ -4,7 +4,7 @@ class MiqWebsocketWorker < MiqWorker
   self.required_roles = ['websocket']
 
   RACK_APPLICATION = WebsocketServer
-  STARTING_PORT    = 5000
+  STARTING_PORT    = 5002
 
   def friendly_name
     @friendly_name ||= "Websocket Worker"
